@@ -9,6 +9,7 @@ dependencies = [
     "pwlf>=2.2.1",
     "shioaji>=1.2.0",
     "pytest-asyncio>=0.23",
+    "PyYAML>=6.0",
 ]
 
 [tool.pytest.ini_options]
