@@ -1,0 +1,6 @@
+risk:
+  max_drawdown: 0.15
+  max_var_95: 0.035
+  kelly_cap: 0.25
+  default_stop_loss_pct: 0.03
+  extreme_slope_multiplier: 2.0

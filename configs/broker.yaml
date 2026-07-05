@@ -1,0 +1,23 @@
+# RollSlope Quant Broker Configuration
+# Production credentials must be supplied through environment variables, not this file.
+
+broker: shioaji
+
+shioaji:
+  simulation: true
+  default_exchange: TSE
+  fetch_contract: true
+  contracts_timeout: 30000
+  receive_window: 30000
+  safety:
+    allow_live_trading: false
+    max_lots_per_order: 1
+    require_ca_for_live: true
+
+order_defaults:
+  stock:
+    order_kind: MARKET
+    order_type: IOC
+    order_lot: Common
+    order_cond: Cash
+    custom_field: RSQ001

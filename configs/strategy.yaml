@@ -1,0 +1,10 @@
+slope_thresholds:
+  strong_up: 1.0
+  strong_down: -1.0
+  flat_abs: 0.5
+model:
+  n_segments: 3
+  min_r_squared: 0.70
+rolling:
+  window_size: 90
+  cycle_minutes: 60

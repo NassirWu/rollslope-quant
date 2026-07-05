@@ -1,0 +1,11 @@
+# AI Advisor configuration (non-secret settings only).
+# API keys and endpoints with credentials must be supplied via environment
+# variables (.env), never written here.
+
+ollama:
+  model: qwen2.5-coder:14b
+  temperature: 0.2
+  timeout_seconds: 60
+
+advisors:
+  enable_ollama: true
