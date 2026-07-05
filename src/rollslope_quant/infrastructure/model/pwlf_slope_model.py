@@ -24,6 +24,8 @@ def _clean_xy(x: Iterable[float], y: Iterable[float]) -> CleanSeries:
     y_arr = y_arr[mask]
     if len(x_arr) < 6:
         raise ValueError("at least 6 valid observations are required for 3-segment fitting")
+    if np.ptp(x_arr) == 0:
+        raise ValueError("x values must not be constant")
     order = np.argsort(x_arr)
     return CleanSeries(x=x_arr[order], y=y_arr[order])
 
@@ -168,5 +170,9 @@ def calculate_dynamic_slopes(
             fitted_y=fitted,
             model_name="pwlf",
         )
-    except ImportError:
-        return _fit_with_numpy_dynamic_programming(x_arr, y_arr, min_segment_size=min_segment_size)
+    except (ImportError, ValueError, RuntimeError, np.linalg.LinAlgError):
+        return _fit_with_numpy_dynamic_programming(
+            x_arr,
+            y_arr,
+            min_segment_size=min_segment_size,
+        )
