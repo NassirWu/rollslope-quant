@@ -36,3 +36,4 @@ reports/*.jpg
 reports/*.jpeg
 reports/*.svg
 !reports/.gitkeep
+reports/*.csv
