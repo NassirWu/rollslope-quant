@@ -30,3 +30,9 @@ logs/**/*.log
 shioaji.log
 logs/
 !logs/.gitkeep
+
+reports/*.png
+reports/*.jpg
+reports/*.jpeg
+reports/*.svg
+!reports/.gitkeep
