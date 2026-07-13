@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
+from rollslope_quant.application.services.market_kline_csv import (
+    prepare_market_kline_dataframe,
+)
 from rollslope_quant.application.services.rolling_slope_table import (
     calculate_rolling_slope_table_from_dataframe,
 )
@@ -19,6 +22,7 @@ PAGE_TITLE = "RollSlope Quant MVP — Mobile Web Operator"
 MODE_DEMO = "跑 Demo 範例資料"
 MODE_MANUAL = "手動輸入 X/Y"
 MODE_CSV = "上傳 CSV"
+MODE_MARKET_KLINE = "上傳市場 K 線 CSV"
 
 DEMO_WINDOW_SIZE = 30
 DEMO_STEP_SIZE = 1
@@ -31,6 +35,10 @@ MANUAL_MIN_R_SQUARED_DEFAULT = 0.7
 CSV_WINDOW_SIZE_DEFAULT = 30
 CSV_STEP_SIZE_DEFAULT = 1
 CSV_MIN_R_SQUARED_DEFAULT = 0.7
+
+MARKET_KLINE_WINDOW_SIZE_DEFAULT = 30
+MARKET_KLINE_STEP_SIZE_DEFAULT = 1
+MARKET_KLINE_MIN_R_SQUARED_DEFAULT = 0.7
 
 SUMMARY_FIELDS = [
     "t1",
@@ -266,6 +274,61 @@ def _render_csv_mode() -> None:
         _render_chart(df, table, x_col=x_col, price_col=y_col)
 
 
+def _render_market_kline_mode() -> None:
+    uploaded = st.file_uploader("上傳市場 K 線 CSV 檔案", type=["csv"], key="market_kline_uploader")
+    if uploaded is None:
+        st.write("請選擇一個市場 K 線 CSV 檔案（欄位包含 datetime、close 等）。")
+        return
+
+    df = pd.read_csv(uploaded)
+    if df.empty or len(df.columns) == 0:
+        st.error("這份 CSV 檔案沒有任何欄位，請確認檔案內容。")
+        return
+
+    window_size = st.number_input(
+        "window_size",
+        min_value=6,
+        value=MARKET_KLINE_WINDOW_SIZE_DEFAULT,
+        step=1,
+        key="market_kline_window_size",
+    )
+    step_size = st.number_input(
+        "step_size",
+        min_value=1,
+        value=MARKET_KLINE_STEP_SIZE_DEFAULT,
+        step=1,
+        key="market_kline_step_size",
+    )
+    min_r_squared = st.number_input(
+        "min_r_squared",
+        min_value=0.0,
+        max_value=1.0,
+        value=MARKET_KLINE_MIN_R_SQUARED_DEFAULT,
+        step=0.05,
+        key="market_kline_min_r_squared",
+    )
+
+    if st.button("計算", key="market_kline_calc"):
+        prepared_df = prepare_market_kline_dataframe(df)
+        _validate_inputs(
+            prepared_df,
+            x_col=None,
+            y_col="close",
+            window_size=int(window_size),
+            step_size=int(step_size),
+        )
+        table = calculate_rolling_slope_table_from_dataframe(
+            prepared_df,
+            price_col="close",
+            x_col=None,
+            window_size=int(window_size),
+            step_size=int(step_size),
+            min_r_squared=float(min_r_squared),
+        )
+        _render_result(table)
+        _render_chart(prepared_df, table, x_col=None, price_col="close")
+
+
 def _render_usage_guide() -> None:
     with st.expander("使用說明"):
         st.write(
@@ -298,15 +361,17 @@ def main() -> None:
     _render_usage_guide()
     _render_result_explanation()
 
-    mode = st.radio("選擇模式", [MODE_DEMO, MODE_MANUAL, MODE_CSV])
+    mode = st.radio("選擇模式", [MODE_DEMO, MODE_MANUAL, MODE_CSV, MODE_MARKET_KLINE])
 
     try:
         if mode == MODE_DEMO:
             _render_demo_mode()
         elif mode == MODE_MANUAL:
             _render_manual_mode()
-        else:
+        elif mode == MODE_CSV:
             _render_csv_mode()
+        else:
+            _render_market_kline_mode()
     except Exception as exc:  # noqa: BLE001 - 任何計算錯誤都要用白話訊息顯示，不能讓頁面崩潰
         st.error(f"計算失敗：{exc}")
 
