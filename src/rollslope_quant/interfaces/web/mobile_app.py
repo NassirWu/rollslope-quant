@@ -9,6 +9,7 @@ from rollslope_quant.application.services.rolling_slope_table import (
 from rollslope_quant.infrastructure.data.mock_market_data import (
     generate_v_reversal_market_data,
 )
+from rollslope_quant.interfaces.web.version import CLOUD_APP_VERSION
 
 PAGE_TITLE = "RollSlope Quant MVP — Mobile Web Operator"
 
@@ -202,10 +203,37 @@ def _render_csv_mode() -> None:
         _render_result(table)
 
 
+def _render_usage_guide() -> None:
+    with st.expander("使用說明"):
+        st.write(
+            "1. 選擇上方其中一種模式：跑 Demo、手動輸入 X/Y，或上傳 CSV。\n\n"
+            "2. X 代表資料的先後順序，例如第 1 筆、第 2 筆，或是時間軸。\n\n"
+            "3. Y 代表你想觀察的數值，例如價格。\n\n"
+            "4. 按下「計算」按鈕，畫面會顯示結果表格。\n\n"
+            "5. 可以按「下載結果 CSV」把結果存到手機或電腦。"
+        )
+
+
+def _render_result_explanation() -> None:
+    with st.expander("結果解讀"):
+        st.write(
+            "t1 / t2 / t3、z1 / z2 / z3：代表資料前段、中段、後段的斜率變化程度。\n\n"
+            "breakpoint_1 / breakpoint_2：代表趨勢轉折的位置。\n\n"
+            "r_squared：代表這個計算結果的擬合程度，數字愈接近 1 代表愈準確。\n\n"
+            "is_valid：代表這筆結果有沒有達到預先設定的準確門檻，True 代表合格，False 代表不合格。"
+        )
+
+
+def _render_footer() -> None:
+    st.caption(f"Cloud MVP {CLOUD_APP_VERSION}")
+
+
 def main() -> None:
     st.set_page_config(page_title=PAGE_TITLE)
     st.title(PAGE_TITLE)
     _render_warning_banner()
+    _render_usage_guide()
+    _render_result_explanation()
 
     mode = st.radio("選擇模式", [MODE_DEMO, MODE_MANUAL, MODE_CSV])
 
@@ -218,6 +246,8 @@ def main() -> None:
             _render_csv_mode()
     except Exception as exc:  # noqa: BLE001 - 任何計算錯誤都要用白話訊息顯示，不能讓頁面崩潰
         st.error(f"計算失敗：{exc}")
+
+    _render_footer()
 
 
 if __name__ == "__main__":
