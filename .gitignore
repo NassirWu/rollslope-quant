@@ -37,3 +37,6 @@ reports/*.jpeg
 reports/*.svg
 !reports/.gitkeep
 reports/*.csv
+
+release/
+release_inputs/word/*.docx

@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-CLOUD_APP_VERSION = "v0.9.8"
+CLOUD_APP_VERSION = "v0.10.0"
