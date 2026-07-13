@@ -20,6 +20,7 @@ EXPECTED_CLOUD_REQUIREMENTS = (
     "numpy>=1.24\n"
     "pwlf>=2.2.1\n"
     "scipy>=1.10\n"
+    "matplotlib>=3.8\n"
 )
 
 

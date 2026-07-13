@@ -65,11 +65,10 @@ def test_cloud_app_py_does_not_run_ui_on_import() -> None:
     assert not any(line.startswith("main(") for line in top_level_lines)
 
 
-def test_cloud_requirements_does_not_contain_shioaji_or_pytest_or_matplotlib() -> None:
+def test_cloud_requirements_does_not_contain_shioaji_or_pytest() -> None:
     text = CLOUD_REQUIREMENTS_TXT.read_text(encoding="utf-8").lower()
     assert "shioaji" not in text
     assert "pytest" not in text
-    assert "matplotlib" not in text
 
 
 def test_cloud_requirements_has_no_blacklisted_content() -> None:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
@@ -9,6 +10,8 @@ from rollslope_quant.application.services.rolling_slope_table import (
 from rollslope_quant.infrastructure.data.mock_market_data import (
     generate_v_reversal_market_data,
 )
+from rollslope_quant.infrastructure.model.pwlf_slope_model import calculate_dynamic_slopes
+from rollslope_quant.interfaces.visualization.slope_visualizer import plot_slope_fitting
 from rollslope_quant.interfaces.web.version import CLOUD_APP_VERSION
 
 PAGE_TITLE = "RollSlope Quant MVP — Mobile Web Operator"
@@ -112,6 +115,63 @@ def _render_result(table: pd.DataFrame) -> None:
     )
 
 
+def _render_chart(
+    df: pd.DataFrame,
+    table: pd.DataFrame,
+    *,
+    x_col: str | None,
+    price_col: str,
+) -> None:
+    """輔助圖表：只畫最後一個 rolling window。任何失敗都只顯示警告，不影響表格結果。"""
+    try:
+        if table.empty:
+            st.warning("沒有可畫圖的資料，已略過圖表。")
+            return
+
+        last = table.iloc[-1]
+        if last.get("error"):
+            st.warning("最後一個 window 計算有錯誤，已略過圖表。")
+            return
+
+        start = last.get("window_start")
+        end = last.get("window_end")
+        if start is None or end is None or pd.isna(start) or pd.isna(end):
+            st.warning("找不到最後一個 window 的範圍，已略過圖表。")
+            return
+
+        start = int(start)
+        end = int(end)
+        if start < 0 or end < start or end >= len(df):
+            st.warning("最後一個 window 的範圍不正確，已略過圖表。")
+            return
+
+        window_df = df.iloc[start : end + 1]
+
+        if x_col is None:
+            window_x = window_df.index.to_numpy(dtype=float)
+        else:
+            window_x = pd.to_numeric(window_df[x_col], errors="coerce").to_numpy(dtype=float)
+        window_y = pd.to_numeric(window_df[price_col], errors="coerce").to_numpy(dtype=float)
+
+        if len(window_x) == 0 or len(window_y) == 0:
+            st.warning("最後一個 window 沒有資料，已略過圖表。")
+            return
+        if pd.isna(window_x).any() or pd.isna(window_y).any():
+            st.warning("最後一個 window 的資料含有無法轉成數字的內容，已略過圖表。")
+            return
+
+        slope_result = calculate_dynamic_slopes(window_x, window_y)
+
+        fig, ax = plt.subplots(figsize=(7, 5))
+        try:
+            plot_slope_fitting(window_x, window_y, slope_result, ax=ax)
+            st.pyplot(fig)
+        finally:
+            plt.close(fig)
+    except Exception as exc:  # noqa: BLE001 - 圖表只是輔助顯示，失敗不能讓整個頁面崩潰
+        st.warning(f"圖表顯示失敗：{exc}")
+
+
 def _render_demo_mode() -> None:
     st.write("使用內建範例資料：先急跌、再盤整、後急漲。")
     if st.button("計算", key="demo_calc"):
@@ -132,6 +192,7 @@ def _render_demo_mode() -> None:
             min_r_squared=DEMO_MIN_R_SQUARED,
         )
         _render_result(table)
+        _render_chart(df, table, x_col=None, price_col="close")
 
 
 def _render_manual_mode() -> None:
@@ -159,6 +220,7 @@ def _render_manual_mode() -> None:
             min_r_squared=MANUAL_MIN_R_SQUARED_DEFAULT,
         )
         _render_result(table)
+        _render_chart(df, table, x_col="x", price_col="y")
 
 
 def _render_csv_mode() -> None:
@@ -201,6 +263,7 @@ def _render_csv_mode() -> None:
             min_r_squared=float(min_r_squared),
         )
         _render_result(table)
+        _render_chart(df, table, x_col=x_col, price_col=y_col)
 
 
 def _render_usage_guide() -> None:
